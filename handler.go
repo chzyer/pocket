@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"gopkg.in/logex.v1"
-	"gopkg.in/mgo.v2/bson"
 
 	"golang.org/x/net/html"
 )
@@ -90,42 +89,6 @@ func debug(w http.ResponseWriter, req *http.Request) {
 	walkPrint(f, 0, body)
 }
 
-const ArticleName = "Article"
-
-type Article struct {
-	Id     bson.ObjectId `bson:"_id"`
-	Title  string
-	Host   string
-	Url    string
-	Source []byte
-	Gen    []byte
-}
-
-func NewArticle(url_, title string, source, gen []byte) *Article {
-	u, _ := url.Parse(url_)
-	return &Article{
-		Title:  title,
-		Host:   u.Host,
-		Url:    url_,
-		Source: source,
-		Gen:    gen,
-	}
-}
-
-func FindArticle(s *Session, url_ string) (a *Article) {
-	err := s.C(ArticleName).Find(bson.M{
-		"url": url_,
-	}).One(&a)
-	if err != nil {
-		logex.Error(err)
-	}
-	return
-}
-
-func (a *Article) Save(s *Session) error {
-	return s.C(ArticleName).Insert(a)
-}
-
 func genArticle(session *Session, req *http.Request) (*Article, error) {
 	head, targetUrl, r, err := getSource(req)
 	if err != nil {
@@ -178,11 +141,37 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 	return a, err
 }
 
+func list(w http.ResponseWriter, req *http.Request) {
+	mongo := Mongo()
+	defer mongo.Close()
+
+	articles := FindArticles(mongo)
+	buf := bytes.NewBuffer(nil)
+	buf.WriteString(`<html>
+<head>
+<title>pocket</title>
+<style>` + style + `</style>
+</head>
+<body>
+<div style="padding:20px">
+`)
+	for _, a := range articles {
+		buf.WriteString(`<a href="/` + a.Link() + `">` + a.Title + `</a><br>`)
+	}
+
+	buf.WriteString(`</div></body></html>`)
+	buf.WriteTo(w)
+}
+
 func serve(w http.ResponseWriter, req *http.Request) {
 	session := Mongo()
 	defer session.Close()
 
 	query := getQuery(req)
+	if query == nil {
+		list(w, req)
+		return
+	}
 	var err error
 	a := FindArticle(session, query.String())
 	if a == nil {
