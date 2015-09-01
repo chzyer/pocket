@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/url"
+	"time"
 
 	"gopkg.in/logex.v1"
 	"gopkg.in/mgo.v2/bson"
@@ -10,12 +11,13 @@ import (
 const ArticleName = "Article"
 
 type Article struct {
-	Id     bson.ObjectId `bson:"_id"`
-	Title  string
-	Host   string
-	Url    string
-	Source []byte
-	Gen    []byte
+	Id       bson.ObjectId `bson:"_id"`
+	Title    string
+	Host     string
+	Url      string
+	ReadTime time.Time
+	Source   []byte
+	Gen      []byte
 }
 
 func (a *Article) Link() string {
@@ -37,7 +39,7 @@ func NewArticle(url_, title string, source, gen []byte) *Article {
 }
 
 func FindArticles(s *Session) (a []*Article) {
-	err := s.C(ArticleName).Find(nil).Sort("-_id").All(&a)
+	err := s.C(ArticleName).Find(nil).Sort("readTime", "-_id").All(&a)
 	if err != nil {
 		logex.Error(err)
 	}

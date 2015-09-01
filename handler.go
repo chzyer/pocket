@@ -9,8 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-
-	"gopkg.in/logex.v1"
+	"time"
 
 	"golang.org/x/net/html"
 )
@@ -137,8 +136,7 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 	html.Render(genWriter, target)
 
 	a := NewArticle(targetUrl, title, source, genWriter.Bytes())
-	err = logex.Trace(a.Save(session))
-	return a, err
+	return a, nil
 }
 
 func list(w http.ResponseWriter, req *http.Request) {
@@ -156,7 +154,7 @@ func list(w http.ResponseWriter, req *http.Request) {
 
 <div style="padding-top:40px;padding:20px">
 <h1>Pocket a article</h1>
-<form action="GET" class="search">
+<form method="GET" class="search">
 <input style="display:none" type="submit" />
 <input name="q" placeholder="Enter article url..."/>
 </form>
@@ -190,6 +188,8 @@ func serve(w http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
+	a.ReadTime = time.Now()
+	a.Save()
 
 	writeResp(w, a)
 }
