@@ -27,6 +27,7 @@ func (a *Article) Link() string {
 func NewArticle(url_, title string, source, gen []byte) *Article {
 	u, _ := url.Parse(url_)
 	return &Article{
+		Id:     bson.NewObjectId(),
 		Title:  title,
 		Host:   u.Host,
 		Url:    url_,
