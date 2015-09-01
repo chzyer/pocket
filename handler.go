@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/logex.v1"
+
 	"golang.org/x/net/html"
 )
 
@@ -189,7 +191,9 @@ func serve(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	a.ReadTime = time.Now()
-	a.Save()
+	if err := a.Save(session); err != nil {
+		logex.Error(err)
+	}
 
 	writeResp(w, a)
 }
