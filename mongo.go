@@ -1,13 +1,16 @@
 package main
 
 import (
-	"labix.org/v2/mgo"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 )
 
 var (
 	globalSession *mgo.Session
 	globalDbname  string
 )
+
+type M bson.M
 
 type Session struct {
 	s *mgo.Session
