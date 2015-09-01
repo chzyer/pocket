@@ -17,6 +17,7 @@ form.search{
 form.search input {
 	font-family: Iowan;
 	width: 80%;
+	out-line: none;
 	line-height: 32px;
 	padding: 8px;
 	font-size: 18pt;
