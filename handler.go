@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"gopkg.in/logex.v1"
 	"gopkg.in/mgo.v2/bson"
 
 	"golang.org/x/net/html"
@@ -112,9 +113,12 @@ func NewArticle(url_, title string, source, gen []byte) *Article {
 }
 
 func FindArticle(s *Session, url_ string) (a *Article) {
-	s.C(ArticleName).Find(bson.M{
+	err := s.C(ArticleName).Find(bson.M{
 		"url": url_,
 	}).One(&a)
+	if err != nil {
+		logex.Error(err)
+	}
 	return
 }
 
@@ -170,8 +174,8 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 	html.Render(genWriter, target)
 
 	a := NewArticle(targetUrl, title, source, genWriter.Bytes())
-	a.Save(session)
-	return a, nil
+	err = logex.Trace(a.Save(session))
+	return a, err
 }
 
 func serve(w http.ResponseWriter, req *http.Request) {
