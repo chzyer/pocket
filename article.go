@@ -39,7 +39,7 @@ func NewArticle(url_, title string, source, gen []byte) *Article {
 }
 
 func FindArticles(s *Session) (a []*Article) {
-	err := s.C(ArticleName).Find(nil).Sort("readTime", "-_id").All(&a)
+	err := s.C(ArticleName).Find(nil).Sort("-readtime", "-_id").All(&a)
 	if err != nil {
 		logex.Error(err)
 	}
@@ -57,5 +57,6 @@ func FindArticle(s *Session, url_ string) (a *Article) {
 }
 
 func (a *Article) Save(s *Session) error {
-	return s.C(ArticleName).Insert(a)
+	_, err := s.C(ArticleName).UpsertId(a.Id, bson.M{"$set": a})
+	return err
 }
