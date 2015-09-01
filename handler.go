@@ -153,7 +153,16 @@ func list(w http.ResponseWriter, req *http.Request) {
 <style>` + style + `</style>
 </head>
 <body>
+
+<div style="padding-top:40px;padding:20px">
+<h1>Pocket a article</h1>
+<form action="GET" class="search">
+<input style="display:none" type="submit" />
+<input name="q" placeholder="Enter article url..."/>
+</form>
+</div>
 <div style="padding:20px">
+<h1>Article List</h1>
 `)
 	for _, a := range articles {
 		buf.WriteString(`<a href="/` + a.Link() + `">` + a.Title + `</a><br>`)

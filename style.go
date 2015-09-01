@@ -11,6 +11,17 @@ html{
 	line-height: 28px;
 }
 
+form.search{
+	text-align: center;
+}
+form.search input {
+	font-family: Iowan;
+	width: 80%;
+	line-height: 32px;
+	padding: 8px;
+	font-size: 18pt;
+}
+
 .scrollable {
 	-webkit-font-smoothing: subpixel-antialiased;
 	-webkit-user-select: text;

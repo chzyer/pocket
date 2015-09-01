@@ -37,7 +37,7 @@ func NewArticle(url_, title string, source, gen []byte) *Article {
 }
 
 func FindArticles(s *Session) (a []*Article) {
-	err := s.C(ArticleName).Find(nil).All(&a)
+	err := s.C(ArticleName).Find(nil).Sort("-_id").All(&a)
 	if err != nil {
 		logex.Error(err)
 	}
