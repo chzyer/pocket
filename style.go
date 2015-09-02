@@ -92,6 +92,12 @@ body {
 	word-wrap: break-word;
 }
 
+.alignright {
+	float: right;
+	text-align: right;
+	margin-left: 10px;
+}
+
 div.rich_media_inner {
 	background: transparent!important;
 }
