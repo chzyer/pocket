@@ -118,6 +118,7 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 	title = strings.TrimSpace(title)
 
 	target := nodeFindMax(nodeFindBody(n))
+	removeAttr("style", target)
 	if target.Data == "body" {
 		target.Data = "div"
 	}
@@ -127,14 +128,16 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 
 	if !setTitle {
 		walkDo(nodeFindBody(n), func(n *html.Node) bool {
-			if n.Type == html.ElementNode && (n.Data == "h1" || n.Data == "h2") {
-				t := strings.TrimSpace(getText(n))
-				if strings.Contains(title, t) {
-					setTitle = true
-					tmpTitle = t
-					n.Parent.RemoveChild(n)
+			if n.Type == html.ElementNode {
+				switch n.Data {
+				case "h1", "h2", "h3":
+					t := strings.TrimSpace(getText(n))
+					if strings.Contains(title, t) {
+						setTitle = true
+						tmpTitle = t
+						n.Parent.RemoveChild(n)
+					}
 				}
-
 			}
 			return true
 		})
@@ -191,10 +194,11 @@ func serve(w http.ResponseWriter, req *http.Request) {
 	session := Mongo()
 	defer session.Close()
 
-	isfetchStr := "&_fetch=1"
+	isfetchStr := "_fetch=1"
 	isFetch := strings.HasSuffix(req.URL.RawQuery, isfetchStr)
 	if isFetch {
 		req.URL.RawQuery = req.URL.RawQuery[:len(req.URL.RawQuery)-len(isfetchStr)]
+		req.URL.RawQuery = strings.TrimRight(req.URL.RawQuery, "?&")
 	}
 
 	query := getQuery(req)
@@ -256,7 +260,7 @@ func doFilter(head, title string, target *html.Node) (setTitle bool) {
 				}
 			case "script", "form":
 				n.Parent.RemoveChild(n)
-			case "h1", "h2":
+			case "h1", "h2", "h3":
 				t := getText(n)
 				if !setTitle && strings.Contains(title, t) {
 					title = t
