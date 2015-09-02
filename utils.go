@@ -101,7 +101,9 @@ func walk(n *html.Node) {
 		}
 
 		if n.Type == html.TextNode {
-			getData(n.Parent).Count += len(strings.TrimSpace(n.Data))
+			if n.Parent.Data != "script" {
+				getData(n.Parent).Count += len(strings.TrimSpace(n.Data))
+			}
 		}
 		getData(n.Parent).Count += getData(n).Count
 		if getData(n).Count > getData(n.Parent).MaxChild {
