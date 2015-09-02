@@ -11,6 +11,22 @@ html{
 	line-height: 28px;
 }
 
+html, button {
+    font-family: Iowan, Palatino, Times, 'Times New Roman', serif!important;
+}
+
+button {
+	padding: 8px;
+	background: rgb(244, 236, 221);
+	color: rgb(72, 41, 19);
+	font-size: 14pt;
+	border: 0px;
+	cursor: pointer;
+}
+button:hover {
+	background: rgb(234, 226, 211);
+}
+
 form.search{
 	text-align: center;
 }
@@ -71,7 +87,7 @@ body {
 	font-size: 14pt;
     max-width: 800px;
     margin: 0 auto!important;
-word-wrap: break-word;
+	word-wrap: break-word;
 }
 
 #page {
