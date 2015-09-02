@@ -2,7 +2,7 @@ package main
 
 var style = `
 html{
-    background: rgb(248,241,228);
+    background: rgb(248,241,228)!important;
     font-family: Iowan, Palatino, Times, 'Times New Roman', serif!important;
     -webkit-user-select: text;
     -webkit-font-smoothing: subpixel-antialiased;
@@ -32,8 +32,9 @@ form.search{
 }
 form.search input {
 	font-family: Iowan;
-	width: 80%;
-	out-line: none;
+	width: 90%;
+	outline: none;
+	border: 3px solid rgb(172,141,119);
 	line-height: 32px;
 	padding: 8px;
 	font-size: 18pt;
@@ -83,11 +84,16 @@ a{
 
 body {
     padding-bottom:1px;
+	background: transparent!important;
     color: rgb(72,41,19)!important;
 	font-size: 14pt;
     max-width: 800px;
     margin: 0 auto!important;
 	word-wrap: break-word;
+}
+
+div.rich_media_inner {
+	background: transparent!important;
 }
 
 #page {

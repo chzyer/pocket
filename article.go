@@ -71,6 +71,16 @@ func DeleteArticle(s *Session, id string) error {
 }
 
 func (a *Article) Save(s *Session) error {
-	_, err := s.C(ArticleName).UpsertId(a.Id, bson.M{"$set": a})
+	_, err := s.C(ArticleName).Upsert(bson.M{
+		"url": a.Url,
+	}, bson.M{"$set": bson.M{
+		"title":    a.Title,
+		"host":     a.Host,
+		"url":      a.Url,
+		"deleted":  a.Deleted,
+		"readtime": a.ReadTime,
+		"source":   a.Source,
+		"gen":      a.Gen,
+	}})
 	return err
 }

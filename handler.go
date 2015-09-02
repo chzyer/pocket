@@ -17,14 +17,16 @@ import (
 )
 
 func Handler(mux *http.ServeMux) {
-	mux.HandleFunc("/", serve)
-	mux.HandleFunc("/delete", deleteHandler)
 	mux.HandleFunc("/debug", debug)
+	mux.HandleFunc("/delete", deleteHandler)
+	mux.HandleFunc("/", serve)
 }
 
 func getQuery(req *http.Request) (uu *url.URL) {
 	query := req.FormValue("q")
+	formQuery := true
 	if query == "" {
+		formQuery = false
 		query = req.URL.Path[1:]
 	}
 	if query != "" {
@@ -32,6 +34,9 @@ func getQuery(req *http.Request) (uu *url.URL) {
 			query = "http://" + query
 		}
 		uu, _ = url.Parse(query)
+		if !formQuery {
+			uu.RawQuery = req.URL.RawQuery
+		}
 	}
 	return
 }
@@ -47,7 +52,6 @@ func getSource(req *http.Request) (string, string, io.ReadCloser, error) {
 	}
 
 	query := getQuery(req)
-	query.RawQuery = req.URL.RawQuery
 	if query != nil {
 		u := query.String()
 		query.Path = filepath.Dir(query.Path)
@@ -179,9 +183,19 @@ func list(w http.ResponseWriter, req *http.Request) {
 	buf.WriteTo(w)
 }
 
+func getAndDel(key string, u *url.URL) bool {
+	return true
+}
+
 func serve(w http.ResponseWriter, req *http.Request) {
 	session := Mongo()
 	defer session.Close()
+
+	isfetchStr := "&_fetch=1"
+	isFetch := strings.HasSuffix(req.URL.RawQuery, isfetchStr)
+	if isFetch {
+		req.URL.RawQuery = req.URL.RawQuery[:len(req.URL.RawQuery)-len(isfetchStr)]
+	}
 
 	query := getQuery(req)
 	if query == nil {
@@ -191,10 +205,7 @@ func serve(w http.ResponseWriter, req *http.Request) {
 	var err error
 	var a *Article
 
-	if req.URL.Query().Get("_fetch") != "1" {
-		q := req.URL.Query()
-		q.Del("_fetch")
-		req.URL.RawQuery = q.Encode()
+	if !isFetch {
 		a = FindArticle(session, query.String())
 	}
 	if a == nil {
@@ -294,7 +305,7 @@ func doFilter(head, title string, target *html.Node) (setTitle bool) {
 				setAttr("href", fillUrl(head, attr.Val), n)
 			case "div":
 				removeClass := []string{
-					"comment", "tracking-ad", "digg",
+					"comment", "tracking-ad", "digg", "qr_code_pc_outer",
 				}
 				if attr := getAttr("class", n); attr != nil {
 					for _, c := range removeClass {
