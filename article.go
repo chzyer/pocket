@@ -61,6 +61,12 @@ func FindArticle(s *Session, url_ string) (a *Article) {
 	return
 }
 
+func DeleteArticleUrl(s *Session, url_ string) error {
+	return s.C(ArticleName).Remove(bson.M{
+		"url": url_,
+	})
+}
+
 func DeleteArticle(s *Session, id string) error {
 	if !bson.IsObjectIdHex(id) {
 		return fmt.Errorf("invalid id")
