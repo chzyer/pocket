@@ -39,7 +39,7 @@ func getQuery(req *http.Request) (uu *url.URL) {
 func getSource(req *http.Request) (string, string, io.ReadCloser, error) {
 	local := req.FormValue("l")
 	if local != "" {
-		f, err := os.Open(local)
+		f, err := os.Open("testdata/" + local)
 		if err != nil {
 			return "", "", nil, err
 		}
@@ -47,6 +47,7 @@ func getSource(req *http.Request) (string, string, io.ReadCloser, error) {
 	}
 
 	query := getQuery(req)
+	query.RawQuery = req.URL.RawQuery
 	if query != nil {
 		u := query.String()
 		query.Path = filepath.Dir(query.Path)
@@ -113,6 +114,9 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 	title = strings.TrimSpace(title)
 
 	target := nodeFindMax(nodeFindBody(n))
+	if target.Data == "body" {
+		target.Data = "div"
+	}
 	setTitle := doFilter(head, title, target)
 
 	tmpTitle := ""
@@ -185,7 +189,14 @@ func serve(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	var err error
-	a := FindArticle(session, query.String())
+	var a *Article
+
+	if req.URL.Query().Get("_fetch") != "1" {
+		q := req.URL.Query()
+		q.Del("_fetch")
+		req.URL.RawQuery = q.Encode()
+		a = FindArticle(session, query.String())
+	}
 	if a == nil {
 		a, err = genArticle(session, req)
 		if err != nil {
@@ -216,6 +227,7 @@ func writeResp(w http.ResponseWriter, a *Article) {
 <button onclick="location.href='/delete?id=`+a.Id.Hex()+`'">Delete</button>
 </div>
 <button onclick="location.href='/'">Home</button>
+<button onclick="location.href='`+a.Url+`'">Source</button>
 <div style="clear:both"></div>
 `)
 	w.Write(a.Gen)
@@ -227,6 +239,10 @@ func doFilter(head, title string, target *html.Node) (setTitle bool) {
 	walkDo(target, func(n *html.Node) bool {
 		if n.Type == html.ElementNode {
 			switch n.Data {
+			case "link":
+				if attr := getAttr("rel", n); attr != nil && attr.Val == "stylesheet" {
+					// n.Parent.RemoveChild(n)
+				}
 			case "script", "form":
 				n.Parent.RemoveChild(n)
 			case "h1", "h2":
