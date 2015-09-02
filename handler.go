@@ -260,12 +260,14 @@ func doFilter(head, title string, target *html.Node) (setTitle bool) {
 				}
 			case "script", "form":
 				n.Parent.RemoveChild(n)
+				goto next
 			case "h1", "h2", "h3":
 				t := getText(n)
 				if !setTitle && strings.Contains(title, t) {
 					title = t
 					setTitle = true
 					n.Parent.RemoveChild(n)
+					goto next
 				}
 			case "table":
 				if attr := getAttr("note", n.Parent); attr != nil && attr.Val == "wrap" {
@@ -304,22 +306,31 @@ func doFilter(head, title string, target *html.Node) (setTitle bool) {
 				}
 				if strings.HasPrefix(attr.Val, "javascript:") {
 					n.Parent.RemoveChild(n)
-					break
+					goto next
 				}
 				setAttr("href", fillUrl(head, attr.Val), n)
-			case "div":
+			}
+			switch n.Data {
+			case "div", "a":
+				attrname := []string{
+					"class", "id",
+				}
 				removeClass := []string{
 					"comment", "tracking-ad", "digg", "qr_code_pc_outer",
+					"random",
 				}
-				if attr := getAttr("class", n); attr != nil {
-					for _, c := range removeClass {
-						if strings.Contains(attr.Val, c) {
-							n.Parent.RemoveChild(n)
-							break
+				for _, an := range attrname {
+					if attr := getAttr(an, n); attr != nil {
+						for _, c := range removeClass {
+							if strings.Contains(strings.ToLower(attr.Val), c) {
+								n.Parent.RemoveChild(n)
+								goto next
+							}
 						}
 					}
 				}
 			}
+		next:
 		}
 		return true
 	})
