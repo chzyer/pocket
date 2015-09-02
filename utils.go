@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -42,6 +43,13 @@ func setAttr(key, val string, n *html.Node) {
 }
 
 func fillUrl(head, s string) string {
+	u, _ := url.Parse(head)
+	if strings.HasPrefix(s, "//") {
+		return "http:" + s
+	}
+	if strings.HasPrefix(s, "/") {
+		return "http://" + u.Host + s
+	}
 	if idx := strings.Index(s, "://"); idx > 0 && idx < 10 {
 		return s
 	}

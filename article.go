@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/url"
 	"time"
 
@@ -15,6 +16,7 @@ type Article struct {
 	Title    string
 	Host     string
 	Url      string
+	Deleted  bool
 	ReadTime time.Time
 	Source   []byte
 	Gen      []byte
@@ -39,7 +41,9 @@ func NewArticle(url_, title string, source, gen []byte) *Article {
 }
 
 func FindArticles(s *Session) (a []*Article) {
-	err := s.C(ArticleName).Find(nil).Sort("-readtime", "-_id").All(&a)
+	err := s.C(ArticleName).Find(bson.M{
+		"deleted": bson.M{"$ne": true},
+	}).Sort("-readtime", "-_id").All(&a)
 	if err != nil {
 		logex.Error(err)
 	}
@@ -48,12 +52,22 @@ func FindArticles(s *Session) (a []*Article) {
 
 func FindArticle(s *Session, url_ string) (a *Article) {
 	err := s.C(ArticleName).Find(bson.M{
-		"url": url_,
+		"url":     url_,
+		"deleted": bson.M{"$ne": true},
 	}).One(&a)
 	if err != nil {
 		logex.Error(err)
 	}
 	return
+}
+
+func DeleteArticle(s *Session, id string) error {
+	if !bson.IsObjectIdHex(id) {
+		return fmt.Errorf("invalid id")
+	}
+	return s.C(ArticleName).UpdateId(bson.ObjectIdHex(id), bson.M{
+		"$set": bson.M{"deleted": true},
+	})
 }
 
 func (a *Article) Save(s *Session) error {

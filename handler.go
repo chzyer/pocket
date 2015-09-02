@@ -18,6 +18,7 @@ import (
 
 func Handler(mux *http.ServeMux) {
 	mux.HandleFunc("/", serve)
+	mux.HandleFunc("/delete", deleteHandler)
 	mux.HandleFunc("/debug", debug)
 }
 
@@ -193,6 +194,7 @@ func serve(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 	a.ReadTime = time.Now()
+	a.Deleted = false
 	if err := a.Save(session); err != nil {
 		logex.Error(err)
 	}
@@ -212,7 +214,9 @@ func writeResp(w http.ResponseWriter, a *Article) {
 <h1>`+a.Title+`</h1>
 `)
 	w.Write(a.Gen)
-	io.WriteString(w, "</div></body></html>")
+	io.WriteString(w, "</div>"+
+		`<button onclick="location.href='/delete?id=`+a.Id.Hex()+`'">delete</button>`+
+		"</body></html>")
 }
 
 func doFilter(head, title string, target *html.Node) (setTitle bool) {
@@ -285,4 +289,16 @@ func doFilter(head, title string, target *html.Node) (setTitle bool) {
 		return true
 	})
 	return
+}
+
+func deleteHandler(w http.ResponseWriter, req *http.Request) {
+	id := req.FormValue("id")
+	mongo := Mongo()
+	defer mongo.Close()
+	err := DeleteArticle(mongo, id)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	http.Redirect(w, req, "/", 302)
 }
