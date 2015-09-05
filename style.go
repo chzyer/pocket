@@ -27,6 +27,15 @@ button:hover {
 	background: rgb(234, 226, 211);
 }
 
+hr {
+	border: none;
+	border-bottom: 1px solid rgb(102, 71, 49);
+}
+
+h2 {
+	border-bottom: 1px solid rgb(102, 71, 49);
+}
+
 form.search{
 	text-align: center;
 }
@@ -113,8 +122,10 @@ h1 {
 	font-size: 20pt;
 }
 
+
+
 h2 {
-    background: transparent!important;;
+    background: transparent!important;
     font-size:14pt!important;
 }
 
