@@ -145,5 +145,6 @@ pre {
 	max-width: 100%;
 	overflow-x: scroll;
 	pointer-events: auto;
+	word-wrap: normal;
 }
 `
