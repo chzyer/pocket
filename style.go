@@ -136,7 +136,7 @@ pre span {
 pre {
     background: #f4f4f4!important;
     background: rgb(244,236,221)!important;
-    font-family: "m+ 2m"!important;
+    font-family: "m+ 2m", "monaco"!important;
 	padding: 8px;
 	border-radius: 4px;
 
