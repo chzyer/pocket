@@ -244,6 +244,7 @@ func writeResp(w http.ResponseWriter, a *Article) {
 </div>
 <a class="btn" href="/">Home</a>
 <a class="btn" href="`+a.Url+`">Source</a>
+<a class="btn" href="/archive?id=`+a.Id.Hex()+`">Archive</a>
 <div style="clear:both"></div>
 `)
 	w.Write(a.Gen)
@@ -259,6 +260,8 @@ func doFilter(head, title string, target *html.Node) (setTitle bool) {
 				if attr := getAttr("rel", n); attr != nil && attr.Val == "stylesheet" {
 					// n.Parent.RemoveChild(n)
 				}
+			case "span", "p":
+				removeAttr("style", n)
 			case "script", "form":
 				n.Parent.RemoveChild(n)
 				goto next
@@ -269,6 +272,16 @@ func doFilter(head, title string, target *html.Node) (setTitle bool) {
 					setTitle = true
 					n.Parent.RemoveChild(n)
 					goto next
+				}
+				if n.FirstChild == nil {
+					break
+				}
+				if isElem(n.FirstChild, "a") {
+					attr := getAttr("href", n.FirstChild)
+					if attr == nil || attr.Val == "" {
+						break
+					}
+					n.Data = "b"
 				}
 			case "table":
 				if attr := getAttr("note", n.Parent); attr != nil && attr.Val == "wrap" {

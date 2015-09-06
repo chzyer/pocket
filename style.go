@@ -48,13 +48,20 @@ h1#title {
 }
 
 h2 {
-    background: transparent!important;
     font-size:16pt!important;
 }
 
-h3 {
-    background: transparent!important;
+h3, h4 {
     font-size:14pt!important;
+}
+
+h1, h2, h3, h4, h1 a, h2 a, h3 a, h4 a {
+    color: rgb(72,41,19)!important;
+    background: transparent!important;
+}
+
+.noBorder {
+	border-bottom: none;
 }
 
 h1, h2, h3 {
@@ -98,9 +105,7 @@ form.search input {
 }
 
 .scrollable th, .scrollable td {
-	border-bottom-color: rgb(230, 218, 202);
-	border-bottom-style: solid;
-	border-bottom-width: 1px;
+	border-bottom: 1px solid rgb(230, 218, 202);
 	border-collapse: collapse;
 }
 
@@ -120,7 +125,7 @@ body {
     padding-bottom:1px;
 	background: transparent!important;
     color: rgb(72,41,19)!important;
-	font-size: 14pt;
+	font-size: 14pt!important;
     max-width: 800px;
     margin: 0 auto!important;
 	word-wrap: break-word;

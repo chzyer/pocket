@@ -167,3 +167,7 @@ func walkDo(n *html.Node, f func(n *html.Node) bool) bool {
 	}
 	return true
 }
+
+func isElem(n *html.Node, d string) bool {
+	return n.Type == html.ElementNode && n.Data == d
+}
