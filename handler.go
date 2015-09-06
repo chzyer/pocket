@@ -295,15 +295,18 @@ func doFilter(head, title string, target *html.Node) (setTitle bool) {
 					n.Parent.RemoveChild(n)
 					goto next
 				}
-				if n.FirstChild == nil {
-					break
-				}
-				if isElem(n.FirstChild, "a") {
-					attr := getAttr("href", n.FirstChild)
-					if attr == nil || attr.Val == "" {
-						break
+				logex.Struct("remove", n.PrevSibling)
+				if n.PrevSibling != nil {
+					p := n.PrevSibling.PrevSibling
+					if p != nil && isElem(p, "hr") {
+						n.Parent.RemoveChild(p)
 					}
-					n.Data = "b"
+				}
+				if n.FirstChild != nil && isElem(n.FirstChild, "a") {
+					attr := getAttr("href", n.FirstChild)
+					if attr != nil && attr.Val != "" {
+						n.Data = "b"
+					}
 				}
 			case "table":
 				if attr := getAttr("note", n.Parent); attr != nil && attr.Val == "wrap" {
