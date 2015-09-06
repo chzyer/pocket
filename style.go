@@ -118,7 +118,12 @@ img {
 }
 
 a[href] {
+	text-decoration: none;
     color: rgb(82,129,197)!important;
+}
+
+a[href]:hover {
+	text-decoration: underline;
 }
 
 body {
