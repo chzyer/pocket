@@ -248,6 +248,15 @@ func serve(w http.ResponseWriter, req *http.Request) {
 }
 
 func writeResp(w http.ResponseWriter, a *Article) {
+	btns := `<div style="line-height:42px">
+<a class="btn" href="/">Home</a>
+<a class="btn" href="` + a.Url + `">Source</a>
+<a class="btn" href="/archive?id=` + a.Id.Hex() + `">Archive</a>
+<a class="btn" href="/delete?id=` + a.Id.Hex() + `">Delete</a>
+<a class="btn" href="?_fetch=1">Refresh</a>
+</div>
+<div style="clear:both"></div>
+`
 	w.Header().Set("Content-Type", "text/html")
 	io.WriteString(w, `<html><head>
 <meta charset="utf-8">
@@ -257,18 +266,12 @@ func writeResp(w http.ResponseWriter, a *Article) {
 </head><body>
 <div id="container">
 <h1 id="title">`+a.Title+`</h1>
-<div style="line-height:42px">
-<a class="btn" href="/">Home</a>
-<a class="btn" href="`+a.Url+`">Source</a>
-<a class="btn" href="/archive?id=`+a.Id.Hex()+`">Archive</a>
-<a class="btn" href="/delete?id=`+a.Id.Hex()+`">Delete</a>
-<a class="btn" href="?_fetch=1">Refresh</a>
-</div>
-<div style="clear:both"></div>
+`+btns+`
 `)
 	w.Write(a.Gen)
 	io.WriteString(w, "</div>"+
-		"</body></html>")
+		btns+
+		"<p></p></body></html>")
 }
 
 func doFilter(head, title string, target *html.Node) (setTitle bool) {
