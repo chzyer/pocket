@@ -21,15 +21,16 @@ blockquote {
 	border-left: 4px solid rgb(102, 71, 49);
 }
 
-button {
+button, .btn {
 	padding: 8px;
 	background: rgb(244, 236, 221);
-	color: rgb(72, 41, 19);
+	color: rgb(72, 41, 19)!important;
+	text-decoration: none;
 	font-size: 14pt;
 	border: 0px;
 	cursor: pointer;
 }
-button:hover {
+button:hover, .btn:hover {
 	background: rgb(234, 226, 211);
 }
 

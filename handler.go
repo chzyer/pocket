@@ -240,10 +240,10 @@ func writeResp(w http.ResponseWriter, a *Article) {
 <div id="container">
 <h1 id="title">`+a.Title+`</h1>
 <div style="float:right">
-<button onclick="location.href='/delete?id=`+a.Id.Hex()+`'">Delete</button>
+<a class="btn" href="/delete?id=`+a.Id.Hex()+`">Delete</a>
 </div>
-<button onclick="location.href='/'">Home</button>
-<button onclick="location.href='`+a.Url+`'">Source</button>
+<a class="btn" href="/">Home</a>
+<a class="btn" href="`+a.Url+`">Source</a>
 <div style="clear:both"></div>
 `)
 	w.Write(a.Gen)
