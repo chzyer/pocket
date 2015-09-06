@@ -17,6 +17,7 @@ type Article struct {
 	Host     string
 	Url      string
 	Deleted  bool
+	Archive  bool
 	ReadTime time.Time
 	Source   []byte
 	Gen      []byte
@@ -43,7 +44,7 @@ func NewArticle(url_, title string, source, gen []byte) *Article {
 func FindArticles(s *Session) (a []*Article) {
 	err := s.C(ArticleName).Find(bson.M{
 		"deleted": bson.M{"$ne": true},
-	}).Sort("-readtime", "-_id").All(&a)
+	}).Sort("archive", "-readtime", "-_id").All(&a)
 	if err != nil {
 		logex.Error(err)
 	}
@@ -76,17 +77,31 @@ func DeleteArticle(s *Session, id string) error {
 	})
 }
 
+func ArchiveArticle(s *Session, id string) error {
+	if !bson.IsObjectIdHex(id) {
+		return fmt.Errorf("invalid id")
+	}
+	return s.C(ArticleName).UpdateId(bson.ObjectIdHex(id), bson.M{
+		"$set": bson.M{"archive": true},
+	})
+}
+
 func (a *Article) Save(s *Session) error {
 	_, err := s.C(ArticleName).Upsert(bson.M{
 		"url": a.Url,
-	}, bson.M{"$set": bson.M{
-		"title":    a.Title,
-		"host":     a.Host,
-		"url":      a.Url,
-		"deleted":  a.Deleted,
-		"readtime": a.ReadTime,
-		"source":   a.Source,
-		"gen":      a.Gen,
-	}})
+	}, bson.M{
+		"$setOnInsert": bson.M{
+			"_id": a.Id,
+		},
+		"$set": bson.M{
+			"archive":  a.Archive,
+			"title":    a.Title,
+			"host":     a.Host,
+			"url":      a.Url,
+			"deleted":  a.Deleted,
+			"readtime": a.ReadTime,
+			"source":   a.Source,
+			"gen":      a.Gen,
+		}})
 	return err
 }

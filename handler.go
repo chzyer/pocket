@@ -18,8 +18,21 @@ import (
 
 func Handler(mux *http.ServeMux) {
 	mux.HandleFunc("/debug", debug)
+	mux.HandleFunc("/archive", archiveHandler)
 	mux.HandleFunc("/delete", deleteHandler)
 	mux.HandleFunc("/", serve)
+}
+
+func archiveHandler(w http.ResponseWriter, req *http.Request) {
+	id := req.FormValue("id")
+	session := Mongo()
+	defer session.Close()
+	err := ArchiveArticle(session, id)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	http.Redirect(w, req, "/", 302)
 }
 
 func getQuery(req *http.Request) (uu *url.URL) {
@@ -178,7 +191,12 @@ func list(w http.ResponseWriter, req *http.Request) {
 <div style="padding:20px">
 <h1>Article List</h1>
 `)
+	firstArchive := false
 	for _, a := range articles {
+		if a.Archive && !firstArchive {
+			firstArchive = true
+			buf.WriteString(`<h1>Archived</h1>`)
+		}
 		buf.WriteString(`<a href="/` + a.Link() + `">` + a.Title + `</a><br>`)
 	}
 
