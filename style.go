@@ -33,6 +33,10 @@ button, .btn, a[href].btn {
 button:hover, .btn:hover {
 	background: rgb(234, 226, 211);
 }
+a[href].btn:hover {
+	background: rgb(234, 226, 211);
+	text-decoration: none;
+}
 
 hr {
 	border: none;
