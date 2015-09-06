@@ -21,7 +21,7 @@ blockquote {
 	border-left: 4px solid rgb(102, 71, 49);
 }
 
-button, .btn {
+button, .btn, a[href].btn {
 	padding: 8px;
 	background: rgb(244, 236, 221);
 	color: rgb(72, 41, 19)!important;
@@ -117,7 +117,7 @@ img {
 	max-width:100%;
 }
 
-a{
+a[href] {
     color: rgb(82,129,197)!important;
 }
 
