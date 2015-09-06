@@ -15,6 +15,12 @@ html, button {
     font-family: Iowan, Palatino, Times, 'Times New Roman', serif!important;
 }
 
+blockquote {
+	margin-left: 8px;
+	padding-left: 28px;
+	border-left: 4px solid rgb(102, 71, 49);
+}
+
 button {
 	padding: 8px;
 	background: rgb(244, 236, 221);
@@ -32,7 +38,25 @@ hr {
 	border-bottom: 1px solid rgb(102, 71, 49);
 }
 
+h1 {
+	font-size: 20pt;
+}
+
+h1#title {
+	border: none;
+}
+
 h2 {
+    background: transparent!important;
+    font-size:16pt!important;
+}
+
+h3 {
+    background: transparent!important;
+    font-size:14pt!important;
+}
+
+h1, h2, h3 {
 	border-bottom: 1px solid rgb(102, 71, 49);
 }
 
@@ -118,25 +142,14 @@ div.rich_media_inner {
     display: none;
 }
 
-h1 {
-	font-size: 20pt;
-}
 
-
-
-h2 {
-    background: transparent!important;
-    font-size:14pt!important;
-}
-
-pre span {
-    font-family: "m+ 2m"!important;
+pre, pre span, pre code {
+    font-family: "m+ 2m", "monaco"!important;
 }
 
 pre {
     background: #f4f4f4!important;
     background: rgb(244,236,221)!important;
-    font-family: "m+ 2m", "monaco"!important;
 	padding: 8px;
 	border-radius: 4px;
 

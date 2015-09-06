@@ -238,7 +238,7 @@ func writeResp(w http.ResponseWriter, a *Article) {
 <style>`+style+`</style>
 </head><body>
 <div id="container">
-<h1>`+a.Title+`</h1>
+<h1 id="title">`+a.Title+`</h1>
 <div style="float:right">
 <button onclick="location.href='/delete?id=`+a.Id.Hex()+`'">Delete</button>
 </div>
