@@ -13,6 +13,7 @@ import (
 
 	"gopkg.in/logex.v1"
 
+	iconv "github.com/djimenez/iconv-go"
 	"golang.org/x/net/html"
 )
 
@@ -109,6 +110,10 @@ func debug(w http.ResponseWriter, req *http.Request) {
 	walkPrint(f, 0, body)
 }
 
+func suitForTitle(title, newTitle string) bool {
+	return strings.Contains(title, newTitle)
+}
+
 func genArticle(session *Session, req *http.Request) (*Article, error) {
 	head, targetUrl, r, err := getSource(req)
 	if err != nil {
@@ -127,6 +132,7 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 	}
 	walk(n)
 
+	charset := getCharset(n)
 	title := getText(nodeFindData("title", nodeFindData("head", n)))
 	title = strings.TrimSpace(title)
 
@@ -141,11 +147,14 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 
 	if !setTitle {
 		walkDo(nodeFindBody(n), func(n *html.Node) bool {
+			if n == target {
+				return false
+			}
 			if n.Type == html.ElementNode {
 				switch n.Data {
 				case "h1", "h2", "h3":
 					t := strings.TrimSpace(getText(n))
-					if strings.Contains(title, t) {
+					if suitForTitle(title, t) {
 						setTitle = true
 						tmpTitle = t
 						n.Parent.RemoveChild(n)
@@ -159,11 +168,51 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 		title = tmpTitle
 	}
 
+	if charset == CS_GBK {
+		title, _ = iconv.ConvertString(title, CS_GBK, CS_UTF8)
+		walkDo(target, func(n *html.Node) bool {
+			if n.Type == html.TextNode {
+				if data, err := iconv.ConvertString(n.Data, CS_GBK, CS_UTF8); err == nil {
+					n.Data = data
+				} else {
+					println(err.Error(), n.Data, data)
+				}
+			}
+			return true
+		})
+	}
+
 	genWriter := bytes.NewBuffer(nil)
 	html.Render(genWriter, target)
 
-	a := NewArticle(targetUrl, title, source, genWriter.Bytes())
+	genBytes := genWriter.Bytes()
+	/*
+		if charset == CS_GBK {
+			title, _ = iconv.ConvertString(title, CS_GBK, CS_UTF8)
+			genBytes = convertToGBK(genBytes)
+		}
+	*/
+
+	a := NewArticle(targetUrl, title, source, genBytes)
 	return a, nil
+}
+
+func convertToGBK(source []byte) []byte {
+	cv, err := iconv.NewConverter("gbk", "utf-8")
+	if err != nil {
+		logex.Error(err)
+		return source
+	}
+	defer cv.Close()
+
+	println(string(source))
+
+	ret, err := cv.ConvertString(string(source))
+	if err != nil {
+		logex.Error(err)
+		return []byte(ret)
+	}
+	return []byte(ret)
 }
 
 func list(w http.ResponseWriter, req *http.Request) {
@@ -289,13 +338,12 @@ func doFilter(head, title string, target *html.Node) (setTitle bool) {
 				goto next
 			case "h1", "h2", "h3":
 				t := getText(n)
-				if !setTitle && strings.Contains(title, t) {
+				if !setTitle && suitForTitle(title, t) {
 					title = t
 					setTitle = true
 					n.Parent.RemoveChild(n)
 					goto next
 				}
-				logex.Struct("remove", n.PrevSibling)
 				if n.PrevSibling != nil {
 					p := n.PrevSibling.PrevSibling
 					if p != nil && isElem(p, "hr") {

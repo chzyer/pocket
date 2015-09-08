@@ -115,7 +115,7 @@ func walk(n *html.Node) {
 
 func nodeFindData(data string, n *html.Node) *html.Node {
 	for ; n != nil; n = n.NextSibling {
-		if n.Data == data && n.Type == html.ElementNode {
+		if isElem(n, data) {
 			return n
 		}
 		if n.FirstChild != nil {
@@ -170,4 +170,30 @@ func walkDo(n *html.Node, f func(n *html.Node) bool) bool {
 
 func isElem(n *html.Node, d string) bool {
 	return n.Type == html.ElementNode && n.Data == d
+}
+
+const (
+	CS_UTF8 = "utf-8"
+	CS_GBK  = "gb2312"
+)
+
+func getCharset(n *html.Node) string {
+	head := nodeFindData("head", n)
+	if head == nil {
+		return CS_UTF8
+	}
+	head = head.FirstChild
+	for ; head != nil; head = nodeFindData("meta", head) {
+		attr := getAttr("http-equiv", head)
+		if attr == nil || attr.Val != "Content-Type" {
+			head = head.NextSibling
+			continue
+		}
+		attr = getAttr("content", head)
+		if attr != nil && strings.Contains(attr.Val, CS_GBK) {
+			return CS_GBK
+		}
+		head = head.NextSibling
+	}
+	return CS_UTF8
 }
