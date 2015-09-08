@@ -7,8 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"gopkg.in/logex.v1"
-
 	"golang.org/x/net/html"
 )
 
@@ -180,7 +178,6 @@ func nodeFindMax(n *html.Node) *html.Node {
 		if count-maxChild > int(count/100*40) {
 			if prev := nodePrev(n); prev != nil {
 				if nodeFindData("p", prev.FirstChild) != nil {
-					logex.Struct(prev, n)
 					return nodeJoin(n, prev)
 				}
 			}
