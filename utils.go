@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"gopkg.in/logex.v1"
+
 	"golang.org/x/net/html"
 )
 
@@ -132,7 +134,7 @@ func nodeFindBody(n *html.Node) *html.Node {
 }
 
 func nodePrev(n *html.Node) *html.Node {
-	for ; n != nil; n = n.PrevSibling {
+	for n = n.PrevSibling; n != nil; n = n.PrevSibling {
 		if n.Type == html.TextNode {
 			continue
 		}
@@ -141,18 +143,47 @@ func nodePrev(n *html.Node) *html.Node {
 	return nil
 }
 
+func nodeNext(n *html.Node) *html.Node {
+	for n = n.NextSibling; n != nil; n = n.NextSibling {
+		if n.Type == html.TextNode {
+			continue
+		}
+		return n
+	}
+	return nil
+}
+
+func nodeJoin(n, newNode *html.Node) *html.Node {
+	p := &html.Node{
+		Parent:      n.Parent,
+		PrevSibling: n.PrevSibling,
+		NextSibling: n.NextSibling,
+
+		Type: html.ElementNode,
+		Data: "div",
+	}
+	for _, nn := range []*html.Node{n, newNode} {
+		nn.PrevSibling = nil
+		nn.Parent = nil
+		nn.NextSibling = nil
+	}
+	p.AppendChild(newNode)
+	p.AppendChild(n)
+	return p
+}
+
 func nodeFindMax(n *html.Node) *html.Node {
 	first := n
 	for ; n != nil; n = n.NextSibling {
 		count := getData(n).Count
 		maxChild := getData(n).MaxChild
-		if count-maxChild > int(count/100*50) {
+		if count-maxChild > int(count/100*40) {
 			if prev := nodePrev(n); prev != nil {
 				if nodeFindData("p", prev.FirstChild) != nil {
-					return n.Parent
+					logex.Struct(prev, n)
+					return nodeJoin(n, prev)
 				}
 			}
-			println(3)
 			return n
 		} else if getData(n).Child != nil {
 			return nodeFindMax(getData(n).Child)
