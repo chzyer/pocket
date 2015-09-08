@@ -131,12 +131,28 @@ func nodeFindBody(n *html.Node) *html.Node {
 	return nodeFindData("body", n)
 }
 
+func nodePrev(n *html.Node) *html.Node {
+	for ; n != nil; n = n.PrevSibling {
+		if n.Type == html.TextNode {
+			continue
+		}
+		return n
+	}
+	return nil
+}
+
 func nodeFindMax(n *html.Node) *html.Node {
 	first := n
 	for ; n != nil; n = n.NextSibling {
 		count := getData(n).Count
 		maxChild := getData(n).MaxChild
-		if count-maxChild > int(count/100*40) {
+		if count-maxChild > int(count/100*50) {
+			if prev := nodePrev(n); prev != nil {
+				if nodeFindData("p", prev.FirstChild) != nil {
+					return n.Parent
+				}
+			}
+			println(3)
 			return n
 		} else if getData(n).Child != nil {
 			return nodeFindMax(getData(n).Child)

@@ -93,7 +93,12 @@ func debug(w http.ResponseWriter, req *http.Request) {
 	}
 	defer r.Close()
 
-	n, err := html.Parse(r)
+	source, err := ioutil.ReadAll(r)
+	if err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	n, err := getNodeWithCharset(source)
 	if err != nil {
 		http.Error(w, err.Error(), 400)
 		return
@@ -114,6 +119,22 @@ func suitForTitle(title, newTitle string) bool {
 	return strings.Contains(title, newTitle)
 }
 
+func getNodeWithCharset(source []byte) (*html.Node, error) {
+	n, err := html.Parse(bytes.NewReader(source))
+	if err != nil {
+		return nil, err
+	}
+
+	charset := getCharset(n)
+	if charset == CS_UTF8 {
+		return n, nil
+	}
+
+	data := convertString(string(source), charset, CS_UTF8)
+	n, err = html.Parse(bytes.NewReader([]byte(data)))
+	return n, err
+}
+
 func genArticle(session *Session, req *http.Request) (*Article, error) {
 	head, targetUrl, r, err := getSource(req)
 	if err != nil {
@@ -124,21 +145,9 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 		return nil, err
 	}
 	r.Close()
-	sourceReader := bytes.NewReader(source)
-
-	n, err := html.Parse(sourceReader)
+	n, err := getNodeWithCharset(source)
 	if err != nil {
 		return nil, err
-	}
-	charset := getCharset(n)
-
-	if charset == CS_GBK {
-		data := convertString(string(source), CS_GBK, CS_UTF8)
-		sourceReader = bytes.NewReader([]byte(data))
-		n, err = html.Parse(sourceReader)
-		if err != nil {
-			return nil, err
-		}
 	}
 	walk(n)
 
