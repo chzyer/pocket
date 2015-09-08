@@ -130,9 +130,18 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 	if err != nil {
 		return nil, err
 	}
+	charset := getCharset(n)
+
+	if charset == CS_GBK {
+		data := convertString(string(source), CS_GBK, CS_UTF8)
+		sourceReader = bytes.NewReader([]byte(data))
+		n, err = html.Parse(sourceReader)
+		if err != nil {
+			return nil, err
+		}
+	}
 	walk(n)
 
-	charset := getCharset(n)
 	title := getText(nodeFindData("title", nodeFindData("head", n)))
 	title = strings.TrimSpace(title)
 
@@ -168,33 +177,36 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 		title = tmpTitle
 	}
 
-	if charset == CS_GBK {
-		title, _ = iconv.ConvertString(title, CS_GBK, CS_UTF8)
-		walkDo(target, func(n *html.Node) bool {
-			if n.Type == html.TextNode {
-				if data, err := iconv.ConvertString(n.Data, CS_GBK, CS_UTF8); err == nil {
-					n.Data = data
-				} else {
-					println(err.Error(), n.Data, data)
-				}
-			}
-			return true
-		})
-	}
-
 	genWriter := bytes.NewBuffer(nil)
 	html.Render(genWriter, target)
 
 	genBytes := genWriter.Bytes()
-	/*
-		if charset == CS_GBK {
-			title, _ = iconv.ConvertString(title, CS_GBK, CS_UTF8)
-			genBytes = convertToGBK(genBytes)
-		}
-	*/
-
 	a := NewArticle(targetUrl, title, source, genBytes)
 	return a, nil
+}
+
+func convertString(data string, from, to string) string {
+	conv, err := iconv.NewConverter(from, to)
+	if err != nil {
+		logex.Error(err)
+		return data
+	}
+	defer conv.Close()
+
+	source := []byte(data)
+	total := 0
+	buf := bytes.NewBuffer(nil)
+	for total < len(source) {
+		output := make([]byte, len(source))
+		read, written, err := conv.Convert(source[total:], output)
+		buf.Write(output[:written])
+		total += read
+		if err != nil {
+			buf.WriteByte(source[total])
+			total += 1
+		}
+	}
+	return string(buf.Bytes())
 }
 
 func convertToGBK(source []byte) []byte {
