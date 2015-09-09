@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Pocket extension</title>
+<script>
+	(function() {
+		'use strict';
+		safari.application.addEventListener('command', function(event) {
+			if (event.command != "openPocket") return;
+			event.preventDefault();
+			var tab = safari.application.activeBrowserWindow.activeTab;
+			if (tab.url.substr(0, 7) == "http://") {
+				tab.url = "http://pocket.0xdf.com/" + tab.url.substr(7);
+			} else if (tab.url.substr(0, 8) == "https://") {
+				tab.url = "http://pocket.0xdf.com/" + tab.url.substr(8);
+			}
+		}, false)
+	})();
+</script>
