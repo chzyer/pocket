@@ -339,8 +339,8 @@ func writeResp(w http.ResponseWriter, a *Article) {
 `+btns+`
 `)
 	w.Write(a.Gen)
-	io.WriteString(w, "</div>"+
-		btns+
+	io.WriteString(w, btns+
+		"</div>"+
 		"<p></p></body></html>")
 }
 
