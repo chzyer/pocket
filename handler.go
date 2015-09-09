@@ -267,11 +267,18 @@ func list(w http.ResponseWriter, req *http.Request) {
 			firstArchive = true
 			buf.WriteString(`<h1>Archived</h1>`)
 		}
-		buf.WriteString(`<a href="/` + a.Link() + `">` + a.Title + `</a><br>`)
+		buf.WriteString(`<a href="/` + a.Link() + `">` + strdef(a.Title, a.Url) + `</a><br>`)
 	}
 
 	buf.WriteString(`</div></body></html>`)
 	buf.WriteTo(w)
+}
+
+func strdef(s, d string) string {
+	if s == "" {
+		return d
+	}
+	return s
 }
 
 func getAndDel(key string, u *url.URL) bool {
@@ -318,12 +325,16 @@ func serve(w http.ResponseWriter, req *http.Request) {
 }
 
 func writeResp(w http.ResponseWriter, a *Article) {
+	ref := "?_fetch=1"
+	if u, _ := url.Parse(a.Url); u.RawQuery != "" {
+		ref = "?" + u.RawQuery + "&_fetch=1"
+	}
 	btns := `<div style="line-height:42px">
 <a class="btn" href="/">Home</a>
 <a class="btn" href="` + a.Url + `">Source</a>
 <a class="btn" href="/archive?id=` + a.Id.Hex() + `">Archive</a>
 <a class="btn" href="/delete?id=` + a.Id.Hex() + `">Delete</a>
-<a class="btn" href="?_fetch=1">Refresh</a>
+<a class="btn" href="` + ref + `">Refresh</a>
 </div>
 <div style="clear:both"></div>
 `
@@ -376,6 +387,9 @@ func doFilter(head, title string, target *html.Node) (setTitle bool) {
 					if attr != nil && attr.Val != "" {
 						n.Data = "b"
 					}
+				}
+				if calTextWidth(t) > 40 {
+					n.Data = "b"
 				}
 			case "table":
 				if attr := getAttr("note", n.Parent); attr != nil && attr.Val == "wrap" {

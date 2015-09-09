@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"golang.org/x/net/html"
 )
@@ -168,6 +169,22 @@ func nodeJoin(n, newNode *html.Node) *html.Node {
 	p.AppendChild(newNode)
 	p.AppendChild(n)
 	return p
+}
+
+func calTextWidth(s string) int {
+	data := []byte(s)
+	size := 0
+	off := 0
+	for off < len(data) {
+		_, s := utf8.DecodeRune(data[off:])
+		if s > 1 {
+			size += 2
+		} else {
+			size += s
+		}
+		off += s
+	}
+	return size
 }
 
 func nodeFindMax(n *html.Node) *html.Node {
