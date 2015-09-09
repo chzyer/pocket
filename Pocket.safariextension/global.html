@@ -2,16 +2,24 @@
 <meta charset="utf-8">
 <title>Pocket extension</title>
 <script>
+	var _pocket_host = "pocket.0xdf.com"
+	function startswith(a, b) {
+		return a.substr(0, b.length) == b
+	}
+	function redirect(tab, url) {
+		if (startswith(url, _pocket_host)) return;
+		tab.url = "http://" + _pocket_host + "/" + url;
+	}
 	(function() {
 		'use strict';
 		safari.application.addEventListener('command', function(event) {
 			if (event.command != "openPocket") return;
 			event.preventDefault();
 			var tab = safari.application.activeBrowserWindow.activeTab;
-			if (tab.url.substr(0, 7) == "http://") {
-				tab.url = "http://pocket.0xdf.com/" + tab.url.substr(7);
-			} else if (tab.url.substr(0, 8) == "https://") {
-				tab.url = "http://pocket.0xdf.com/" + tab.url.substr(8);
+			if (startswith(tab.url, "http://")) {
+				redirect(tab, tab.url.substr(7))
+			} else if (startswith(tab.url, "https://")) {
+				redirect(tab, tab.url.substr(8))
 			}
 		}, false)
 	})();

@@ -9,13 +9,13 @@
 	<key>CFBundleDisplayName</key>
 	<string>Pocket</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.Oxdf.pocket</string>
+	<string>com.fdx0.pocket</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
+	<string>1.1</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>2</string>
 	<key>Chrome</key>
 	<dict>
 		<key>Global Page</key>
@@ -37,9 +37,7 @@
 		</array>
 	</dict>
 	<key>Companion Bundle Identifier</key>
-	<array>
-		<string>0xdf.com</string>
-	</array>
+	<array/>
 	<key>Content</key>
 	<dict>
 		<key>Scripts</key>
