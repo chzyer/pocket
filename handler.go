@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -77,10 +78,23 @@ func getSource(req *http.Request) (string, string, io.ReadCloser, error) {
 	return "", "", nil, io.EOF
 }
 
+const (
+	KEY_NAME = "X-KEY"
+	KEY_VAL  = "6f10c5f8-56cf-11e5-b3a5-5254f0f0417d"
+)
+
 func httpGet(url string) (r io.ReadCloser, err error) {
-	resp, err := http.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
+	}
+	req.Header.Set(KEY_NAME, KEY_VAL)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode/100 != 2 {
+		return nil, fmt.Errorf(resp.Status)
 	}
 	return resp.Body, nil
 }
@@ -286,6 +300,12 @@ func getAndDel(key string, u *url.URL) bool {
 }
 
 func serve(w http.ResponseWriter, req *http.Request) {
+
+	if req.Header.Get(KEY_NAME) == KEY_VAL {
+		http.Error(w, "can't fetch recursion", 403)
+		return
+	}
+
 	session := Mongo()
 	defer session.Close()
 
