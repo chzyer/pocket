@@ -117,7 +117,9 @@ func debug(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), 400)
 		return
 	}
+	doFilter(n)
 	walk(n)
+
 	body := nodeFindBody(n)
 	getData(nodeFindMax(body)).Chosen = true
 
@@ -161,17 +163,20 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 	if err != nil {
 		return nil, err
 	}
+	doFilter(n)
 	walk(n)
 
 	title := getText(nodeFindData("title", nodeFindData("head", n)))
 	title = strings.TrimSpace(title)
 
-	target := nodeFindMax(nodeFindBody(n))
+	body := nodeFindBody(n)
+
+	target := nodeFindMax(body)
 	removeAttr("style", target)
 	if target.Data == "body" {
 		target.Data = "div"
 	}
-	setTitle := doFilter(head, title, target)
+	setTitle := doFill(head, title, target)
 
 	tmpTitle := ""
 
@@ -374,7 +379,74 @@ func writeResp(w http.ResponseWriter, a *Article) {
 		"<p></p></body></html>")
 }
 
-func doFilter(head, title string, target *html.Node) (setTitle bool) {
+func doFill(head, title string, target *html.Node) (setTitle bool) {
+	walkDo(target, func(n *html.Node) bool {
+		if n.Type != html.ElementNode {
+			return true
+		}
+		switch n.Data {
+		case "h1", "h2", "h3":
+			t := getText(n)
+			if !setTitle && suitForTitle(title, t) {
+				title = t
+				setTitle = true
+				n.Parent.RemoveChild(n)
+				return true
+			}
+			if n.PrevSibling != nil {
+				p := n.PrevSibling.PrevSibling
+				if p != nil && isElem(p, "hr") {
+					n.Parent.RemoveChild(p)
+				}
+			}
+			if n.FirstChild != nil && isElem(n.FirstChild, "a") {
+				attr := getAttr("href", n.FirstChild)
+				if attr != nil && attr.Val != "" {
+					n.Data = "b"
+				}
+			}
+			if calTextWidth(t) > 40 {
+				n.Data = "b"
+			}
+		case "table":
+			if attr := getAttr("note", n.Parent); attr != nil && attr.Val == "wrap" {
+				break
+			}
+			node := &html.Node{
+				Parent:     n,
+				Type:       n.Type,
+				Data:       n.Data,
+				Attr:       n.Attr,
+				FirstChild: n.FirstChild,
+				LastChild:  n.LastChild,
+			}
+			setAttr("border", "0", node)
+			setAttr("cellspacing", "0", node)
+			setAttr("cellpadding", "4", node)
+
+			n.Data = "div"
+			n.Attr = []html.Attribute{
+				{Key: "class", Val: "scrollable"},
+				{Key: "note", Val: "wrap"},
+			}
+			n.FirstChild = node
+			n.LastChild = node
+		case "a":
+			if attr := getAttr("href", n); attr != nil {
+				setAttr("href", fillUrl(head, attr.Val), n)
+			}
+		case "img":
+			attr := getAttr("src", n)
+			if attr != nil {
+				setAttr("src", fillUrl(head, attr.Val), n)
+			}
+		}
+		return true
+	})
+	return
+}
+
+func doFilter(target *html.Node) {
 	walkDo(target, func(n *html.Node) bool {
 		if n.Type == html.ElementNode {
 			switch n.Data {
@@ -387,59 +459,9 @@ func doFilter(head, title string, target *html.Node) (setTitle bool) {
 			case "script", "form":
 				n.Parent.RemoveChild(n)
 				goto next
-			case "h1", "h2", "h3":
-				t := getText(n)
-				if !setTitle && suitForTitle(title, t) {
-					title = t
-					setTitle = true
-					n.Parent.RemoveChild(n)
-					goto next
-				}
-				if n.PrevSibling != nil {
-					p := n.PrevSibling.PrevSibling
-					if p != nil && isElem(p, "hr") {
-						n.Parent.RemoveChild(p)
-					}
-				}
-				if n.FirstChild != nil && isElem(n.FirstChild, "a") {
-					attr := getAttr("href", n.FirstChild)
-					if attr != nil && attr.Val != "" {
-						n.Data = "b"
-					}
-				}
-				if calTextWidth(t) > 40 {
-					n.Data = "b"
-				}
-			case "table":
-				if attr := getAttr("note", n.Parent); attr != nil && attr.Val == "wrap" {
-					break
-				}
-				node := &html.Node{
-					Parent:     n,
-					Type:       n.Type,
-					Data:       n.Data,
-					Attr:       n.Attr,
-					FirstChild: n.FirstChild,
-					LastChild:  n.LastChild,
-				}
-				setAttr("border", "0", node)
-				setAttr("cellspacing", "0", node)
-				setAttr("cellpadding", "4", node)
-
-				n.Data = "div"
-				n.Attr = []html.Attribute{
-					{Key: "class", Val: "scrollable"},
-					{Key: "note", Val: "wrap"},
-				}
-				n.FirstChild = node
-				n.LastChild = node
 			case "img":
 				removeAttr("height", n)
 				removeAttr("width", n)
-				attr := getAttr("src", n)
-				if attr != nil {
-					setAttr("src", fillUrl(head, attr.Val), n)
-				}
 			case "a":
 				attr := getAttr("href", n)
 				if attr == nil {
@@ -449,7 +471,6 @@ func doFilter(head, title string, target *html.Node) (setTitle bool) {
 					n.Parent.RemoveChild(n)
 					goto next
 				}
-				setAttr("href", fillUrl(head, attr.Val), n)
 			}
 			switch n.Data {
 			case "div", "a":

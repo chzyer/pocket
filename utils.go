@@ -75,20 +75,29 @@ func walkPrint(w io.Writer, i int, n *html.Node) {
 			continue
 		}
 
-		if len([]rune(n.Data)) > 40 {
-			n.Data = string([]rune(n.Data)[:40])
-		}
 		d := getData(n)
 		if d.Chosen {
 			w.Write([]byte(`<div style="color: #000">`))
 		}
-		fmt.Fprintf(w, "%v%v(%v) %v - %v,%v\n",
-			strings.Repeat("\t", i),
-			strconv.Quote(n.Data),
-			n.Type,
+		factor := 0
+		if d.Count > 0 {
+			factor = d.MaxChild * 100 / d.Count
+		}
+
+		if len([]rune(n.Data)) > 40 {
+			n.Data = string([]rune(n.Data)[:40])
+		}
+		if n.Type == html.ElementNode {
+			fmt.Fprintf(w, "%v&lt;%v&gt;", strings.Repeat("\t", i), n.Data)
+		} else {
+			fmt.Fprintf(w, "%v%v", strings.Repeat("\t", i), strconv.Quote(n.Data))
+		}
+		fmt.Fprintf(w, " (%v/%v = <b>%v%%</b>) - %v\n",
+			d.MaxChild,
+			d.Count,
+			factor,
+
 			n.Attr,
-			getData(n).Count,
-			getData(n).MaxChild,
 		)
 
 		if n.FirstChild != nil {
@@ -198,12 +207,14 @@ func calTextWidth(s string) int {
 	return size
 }
 
+var factor = 0.6
+
 func nodeFindMax(n *html.Node) *html.Node {
 	first := n
 	for ; n != nil; n = n.NextSibling {
 		count := getData(n).Count
 		maxChild := getData(n).MaxChild
-		if count-maxChild > int(count/100*40) {
+		if maxChild*100/count < 60 {
 			if prev := nodePrev(n); prev != nil {
 				if nodeFindData("p", prev.FirstChild) != nil {
 					return nodeJoin(n, prev)
