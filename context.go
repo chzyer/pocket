@@ -8,6 +8,7 @@ type Data struct {
 	MaxChild    int
 	ChildSize   int
 	Child       *html.Node
+	Chosen      bool
 }
 
 var data = map[*html.Node]*Data{}

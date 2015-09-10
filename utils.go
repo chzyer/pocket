@@ -75,6 +75,13 @@ func walkPrint(w io.Writer, i int, n *html.Node) {
 			continue
 		}
 
+		if len([]rune(n.Data)) > 40 {
+			n.Data = string([]rune(n.Data)[:40])
+		}
+		d := getData(n)
+		if d.Chosen {
+			w.Write([]byte(`<div style="color: #000">`))
+		}
 		fmt.Fprintf(w, "%v%v(%v) %v - %v,%v\n",
 			strings.Repeat("\t", i),
 			strconv.Quote(n.Data),
@@ -87,6 +94,10 @@ func walkPrint(w io.Writer, i int, n *html.Node) {
 		if n.FirstChild != nil {
 			walkPrint(w, i+1, n.FirstChild)
 		}
+		if d.Chosen {
+			w.Write([]byte("</div>"))
+		}
+
 	}
 }
 
@@ -243,18 +254,23 @@ func getCharset(n *html.Node) string {
 	if head == nil {
 		return CS_UTF8
 	}
-	head = head.FirstChild
-	for ; head != nil; head = nodeFindData("meta", head) {
-		attr := getAttr("http-equiv", head)
+	meta := head.FirstChild
+	for ; meta != nil; meta = nodeFindData("meta", meta) {
+		if attr := getAttr("charset", meta); attr != nil {
+			if strings.Contains(attr.Val, CS_GBK) {
+				return CS_GBK
+			}
+		}
+		attr := getAttr("http-equiv", meta)
 		if attr == nil || attr.Val != "Content-Type" {
-			head = head.NextSibling
+			meta = meta.NextSibling
 			continue
 		}
-		attr = getAttr("content", head)
+		attr = getAttr("content", meta)
 		if attr != nil && strings.Contains(attr.Val, CS_GBK) {
 			return CS_GBK
 		}
-		head = head.NextSibling
+		meta = meta.NextSibling
 	}
 	return CS_UTF8
 }

@@ -119,14 +119,12 @@ func debug(w http.ResponseWriter, req *http.Request) {
 	}
 	walk(n)
 	body := nodeFindBody(n)
+	getData(nodeFindMax(body)).Chosen = true
 
-	f, err := os.Create("hello")
-	if err != nil {
-		http.Error(w, err.Error(), 400)
-		return
-	}
-	defer f.Close()
-	walkPrint(f, 0, body)
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(`<html><head><meta charset="utf-8"/></head><body><pre style="overflow-x:auto;tab-size:4;color:#999;font-family: 'm+ 2m'">`))
+	walkPrint(w, 0, body)
+	w.Write([]byte(`</pre></body></html>`))
 }
 
 func suitForTitle(title, newTitle string) bool {
@@ -300,10 +298,11 @@ func getAndDel(key string, u *url.URL) bool {
 }
 
 func serve(w http.ResponseWriter, req *http.Request) {
-
-	if req.Header.Get(KEY_NAME) == KEY_VAL {
-		http.Error(w, "can't fetch recursion", 403)
-		return
+	for _, v := range req.Header[KEY_NAME] {
+		if v == KEY_VAL {
+			http.Error(w, "can't fetch recursion", 403)
+			return
+		}
 	}
 
 	session := Mongo()
