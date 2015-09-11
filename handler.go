@@ -126,6 +126,8 @@ func debug(w http.ResponseWriter, req *http.Request) {
 		for a := max.FirstChild; a != nil; a = a.NextSibling {
 			getData(a).Chosen = true
 		}
+	} else {
+		getData(max).Chosen = true
 	}
 
 	w.Header().Set("Content-Type", "text/html")

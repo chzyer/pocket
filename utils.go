@@ -163,7 +163,7 @@ func nodeContain(n, target *html.Node) bool {
 	found := false
 	walkDo(n, func(n *html.Node) bool {
 		if n == target {
-			found = false
+			found = true
 			return false
 		}
 		return true
