@@ -121,10 +121,15 @@ func debug(w http.ResponseWriter, req *http.Request) {
 	walk(n)
 
 	body := nodeFindBody(n)
-	getData(nodeFindMax(body)).Chosen = true
+	max := nodeFindMax(body)
+	if max.Namespace == "joined" {
+		for a := max.FirstChild; a != nil; a = a.NextSibling {
+			getData(a).Chosen = true
+		}
+	}
 
 	w.Header().Set("Content-Type", "text/html")
-	w.Write([]byte(`<html><head><meta charset="utf-8"/></head><body><pre style="overflow-x:auto;tab-size:4;color:#999;font-family: 'm+ 2m'">`))
+	w.Write([]byte(`<html><head><meta charset="utf-8"/></head><body><pre style="overflow-x:auto;tab-size:4;color:#111;font-family: 'm+ 2m'">`))
 	walkPrint(w, 0, body)
 	w.Write([]byte(`</pre></body></html>`))
 }
@@ -253,6 +258,23 @@ func convertToGBK(source []byte) []byte {
 	return []byte(ret)
 }
 
+var scripts = `<script type="text/javascript" charset="utf-8">
+if(("standalone" in window.navigator) && window.navigator.standalone){
+    var noddy, remotes = true;
+    document.addEventListener('click', function(event) {
+        noddy = event.target;
+        while(noddy.nodeName !== "A" && noddy.nodeName !== "HTML") {
+            noddy = noddy.parentNode;
+        }
+        if('href' in noddy && noddy.href.indexOf('http') !== -1 && (noddy.href.indexOf(document.location.host) !== -1 || remotes))
+        {
+            event.preventDefault();
+            document.location.href = noddy.href;
+        }
+    },false);
+}
+</script>`
+
 func list(w http.ResponseWriter, req *http.Request) {
 	mongo := Mongo()
 	defer mongo.Close()
@@ -263,6 +285,8 @@ func list(w http.ResponseWriter, req *http.Request) {
 <head>
 <title>Pocket</title>
 <meta charset="utf-8">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <style>` + style + `</style>
 </head>
@@ -287,7 +311,7 @@ func list(w http.ResponseWriter, req *http.Request) {
 		buf.WriteString(`<a href="/` + a.Link() + `">` + strdef(a.Title, a.Url) + `</a><br>`)
 	}
 
-	buf.WriteString(`</div></body></html>`)
+	buf.WriteString(`</div>` + scripts + `</body></html>`)
 	buf.WriteTo(w)
 }
 
@@ -365,6 +389,7 @@ func writeResp(w http.ResponseWriter, a *Article) {
 	w.Header().Set("Content-Type", "text/html")
 	io.WriteString(w, `<html><head>
 <meta charset="utf-8">
+<meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>`+a.Title+`</title>
 <style>`+style+`</style>

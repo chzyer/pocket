@@ -9,6 +9,7 @@ type Data struct {
 	ChildSize   int
 	Child       *html.Node
 	Chosen      bool
+	Exist       bool
 }
 
 var data = map[*html.Node]*Data{}
@@ -22,6 +23,7 @@ func getData(n *html.Node) *Data {
 	d := data[n]
 	if d == nil {
 		d = &Data{
+			Exist: true,
 			Count: 0,
 		}
 		data[n] = d

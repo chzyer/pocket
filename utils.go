@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/url"
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	ghtml "html"
 
 	"golang.org/x/net/html"
 )
@@ -76,8 +79,12 @@ func walkPrint(w io.Writer, i int, n *html.Node) {
 		}
 
 		d := getData(n)
+		isMostChild := getData(n.Parent).Child == n
+		if isMostChild {
+			w.Write([]byte(`<div style="background: rgba(0, 0, 100, 0.1)">`))
+		}
 		if d.Chosen {
-			w.Write([]byte(`<div style="color: #000">`))
+			w.Write([]byte(`<div id="chosen" style="background: rgb(40, 79, 40);color: #fff">`))
 		}
 		factor := 0
 		if d.Count > 0 {
@@ -90,7 +97,7 @@ func walkPrint(w io.Writer, i int, n *html.Node) {
 		if n.Type == html.ElementNode {
 			fmt.Fprintf(w, "%v&lt;%v&gt;", strings.Repeat("\t", i), n.Data)
 		} else {
-			fmt.Fprintf(w, "%v%v", strings.Repeat("\t", i), strconv.Quote(n.Data))
+			fmt.Fprintf(w, "%v%v", strings.Repeat("\t", i), strconv.Quote(ghtml.EscapeString(n.Data)))
 		}
 		fmt.Fprintf(w, " (%v/%v = <b>%v%%</b>) - %v\n",
 			d.MaxChild,
@@ -103,6 +110,10 @@ func walkPrint(w io.Writer, i int, n *html.Node) {
 		if n.FirstChild != nil {
 			walkPrint(w, i+1, n.FirstChild)
 		}
+		if isMostChild {
+			w.Write([]byte(`</div>`))
+		}
+
 		if d.Chosen {
 			w.Write([]byte("</div>"))
 		}
@@ -148,6 +159,18 @@ func nodeFindData(data string, n *html.Node) *html.Node {
 	return nil
 }
 
+func nodeContain(n, target *html.Node) bool {
+	found := false
+	walkDo(n, func(n *html.Node) bool {
+		if n == target {
+			found = false
+			return false
+		}
+		return true
+	})
+	return found
+}
+
 func nodeFindBody(n *html.Node) *html.Node {
 	return nodeFindData("body", n)
 }
@@ -178,8 +201,9 @@ func nodeJoin(n, newNode *html.Node) *html.Node {
 		PrevSibling: n.PrevSibling,
 		NextSibling: n.NextSibling,
 
-		Type: html.ElementNode,
-		Data: "div",
+		Type:      html.ElementNode,
+		Namespace: "joined",
+		Data:      "div",
 	}
 	for _, nn := range []*html.Node{n, newNode} {
 		nn.PrevSibling = nil
@@ -284,4 +308,10 @@ func getCharset(n *html.Node) string {
 		meta = meta.NextSibling
 	}
 	return CS_UTF8
+}
+
+func printNodes(n *html.Node) {
+	buf := bytes.NewBuffer(nil)
+	html.Render(buf, n)
+	println(string(buf.Bytes()))
 }
