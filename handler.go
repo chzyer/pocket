@@ -198,18 +198,16 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 	var setTitle bool
 
 	if target != nil && target.Parent != nil {
-		var head *html.Node
+		head := target.FirstChild
 		if target.Namespace == JOINED {
 			head = target.Parent.FirstChild
-		} else {
-			head = target.FirstChild
 		}
 		if head.Type == html.TextNode {
 			head = nodeNext(head)
 		}
 		if isElem(head, "h1", "h2") {
 			newTitle := getTitle(head)
-			if len(newTitle) > len(title) {
+			if len(newTitle) > len(title) || suitForTitle(title, newTitle) {
 				title = newTitle
 			}
 			head.Parent.RemoveChild(head)
