@@ -68,7 +68,7 @@ h1, h2, h3, h4, h1 a, h2 a, h3 a, h4 a {
 	border-bottom: none;
 }
 
-h1, h2, h3 {
+h1 {
 	border-bottom: 1px solid rgb(102, 71, 49);
 }
 

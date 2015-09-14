@@ -124,7 +124,11 @@ func debug(w http.ResponseWriter, req *http.Request) {
 	max := nodeFindMax(body)
 	if max.Namespace == "joined" {
 		for a := max.FirstChild; a != nil; a = a.NextSibling {
-			getData(a).Chosen = true
+			if a == max.LastChild {
+				getData(a).Chosen = true
+			} else {
+				getData(a).ChosenBy = true
+			}
 		}
 	} else {
 		getData(max).Chosen = true
@@ -173,8 +177,7 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 	doFilter(n)
 	walk(n)
 
-	title := getText(nodeFindData("title", nodeFindData("head", n)))
-	title = strings.TrimSpace(title)
+	title := getTitle(nodeFindData("title", nodeFindData("head", n)))
 
 	body := nodeFindBody(n)
 
@@ -195,7 +198,7 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 			if n.Type == html.ElementNode {
 				switch n.Data {
 				case "h1", "h2", "h3":
-					t := strings.TrimSpace(getText(n))
+					t := getTitle(n)
 					if suitForTitle(title, t) {
 						setTitle = true
 						tmpTitle = t
@@ -413,7 +416,7 @@ func doFill(head, title string, target *html.Node) (setTitle bool) {
 		}
 		switch n.Data {
 		case "h1", "h2", "h3":
-			t := getText(n)
+			t := getTitle(n)
 			if !setTitle && suitForTitle(title, t) {
 				title = t
 				setTitle = true

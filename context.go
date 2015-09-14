@@ -9,6 +9,7 @@ type Data struct {
 	ChildSize   int
 	Child       *html.Node
 	Chosen      bool
+	ChosenBy    bool
 	Exist       bool
 }
 

@@ -14,6 +14,16 @@ import (
 	"golang.org/x/net/html"
 )
 
+func getTitle(n *html.Node) string {
+	title := getText(n)
+	idx := strings.IndexAny(title, "\n\r")
+	if idx > 0 {
+		title = title[:idx]
+	}
+	title = strings.TrimSpace(title)
+	return
+}
+
 func getText(n *html.Node) string {
 	if n.Type == html.TextNode {
 		return n.Data
@@ -83,8 +93,12 @@ func walkPrint(w io.Writer, i int, n *html.Node) {
 		if isMostChild {
 			w.Write([]byte(`<div style="background: rgba(0, 0, 100, 0.1)">`))
 		}
-		if d.Chosen {
-			w.Write([]byte(`<div id="chosen" style="background: rgb(40, 79, 40);color: #fff">`))
+		if d.Chosen || d.ChosenBy {
+			color := "rgb(40, 79, 40)"
+			if d.ChosenBy {
+				color = "rgba(90, 60, 30, 0.8)"
+			}
+			w.Write([]byte(`<div id="chosen" style="background: ` + color + `;color: #fff">`))
 		}
 		factor := 0
 		if d.Count > 0 {
@@ -96,16 +110,16 @@ func walkPrint(w io.Writer, i int, n *html.Node) {
 		}
 		if n.Type == html.ElementNode {
 			fmt.Fprintf(w, "%v&lt;%v&gt;", strings.Repeat("\t", i), n.Data)
-		} else {
-			fmt.Fprintf(w, "%v%v", strings.Repeat("\t", i), strconv.Quote(ghtml.EscapeString(n.Data)))
-		}
-		fmt.Fprintf(w, " (%v/%v = <b>%v%%</b>) - %v\n",
-			d.MaxChild,
-			d.Count,
-			factor,
+			fmt.Fprintf(w, " (%v/%v = <b>%v%%</b>) - %v\n",
+				d.MaxChild,
+				d.Count,
+				factor,
 
-			n.Attr,
-		)
+				n.Attr,
+			)
+		} else {
+			fmt.Fprintf(w, "%v%v\n", strings.Repeat("\t", i), strconv.Quote(ghtml.EscapeString(n.Data)))
+		}
 
 		if n.FirstChild != nil {
 			walkPrint(w, i+1, n.FirstChild)
@@ -114,7 +128,7 @@ func walkPrint(w io.Writer, i int, n *html.Node) {
 			w.Write([]byte(`</div>`))
 		}
 
-		if d.Chosen {
+		if d.Chosen || d.ChosenBy {
 			w.Write([]byte("</div>"))
 		}
 
