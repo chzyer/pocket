@@ -208,7 +208,10 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 			head = nodeNext(head)
 		}
 		if isElem(head, "h1", "h2") {
-			title = getTitle(head)
+			newTitle := getTitle(head)
+			if len(newTitle) > len(title) {
+				title = newTitle
+			}
 			head.Parent.RemoveChild(head)
 			setTitle = true
 		}
