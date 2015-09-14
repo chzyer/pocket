@@ -209,9 +209,9 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 			newTitle := getTitle(head)
 			if len(newTitle) > len(title) || suitForTitle(title, newTitle) {
 				title = newTitle
+				head.Parent.RemoveChild(head)
+				setTitle = true
 			}
-			head.Parent.RemoveChild(head)
-			setTitle = true
 		}
 	}
 
