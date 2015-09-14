@@ -14,6 +14,10 @@ import (
 	"golang.org/x/net/html"
 )
 
+func trimUnused(s string) string {
+	return strings.TrimRight(s, "¶")
+}
+
 func getTitle(n *html.Node) string {
 	title := getText(n)
 	idx := strings.IndexAny(title, "\n\r")
@@ -21,6 +25,7 @@ func getTitle(n *html.Node) string {
 		title = title[:idx]
 	}
 	title = strings.TrimSpace(title)
+	title = trimUnused(title)
 	return title
 }
 
@@ -209,22 +214,30 @@ func nodeNext(n *html.Node) *html.Node {
 	return nil
 }
 
-func nodeJoin(n, newNode *html.Node) *html.Node {
+func nodeJoin(n *html.Node, newNodes []*html.Node) *html.Node {
+	if len(newNodes) == 0 {
+		return n
+	}
 	p := &html.Node{
 		Parent:      n.Parent,
 		PrevSibling: n.PrevSibling,
 		NextSibling: n.NextSibling,
 
-		Type:      html.ElementNode,
-		Namespace: "joined",
+		Type: html.ElementNode,
+		Attr: []html.Attribute{
+			{Key: "class", Val: JOINED},
+		},
+		Namespace: JOINED,
 		Data:      "div",
 	}
-	for _, nn := range []*html.Node{n, newNode} {
+	for _, nn := range append(newNodes, n) {
 		nn.PrevSibling = nil
 		nn.Parent = nil
 		nn.NextSibling = nil
 	}
-	p.AppendChild(newNode)
+	for _, n := range newNodes {
+		p.AppendChild(n)
+	}
 	p.AppendChild(n)
 	return p
 }
@@ -253,12 +266,18 @@ func nodeFindMax(n *html.Node) *html.Node {
 		count := getData(n).Count
 		maxChild := getData(n).MaxChild
 		if maxChild*100/count < 60 {
-			if prev := nodePrev(n); prev != nil {
+			nodes := make([]*html.Node, getData(n).ChildSize)
+			off := len(nodes) - 1
+			for prev := nodePrev(n); prev != nil; {
 				if nodeFindData("p", prev.FirstChild) != nil {
-					return nodeJoin(n, prev)
+					nodes[off] = prev
+					off--
+				} else {
+					break
 				}
+				prev = nodePrev(prev)
 			}
-			return n
+			return nodeJoin(n, nodes[off+1:])
 		} else if getData(n).Child != nil {
 			return nodeFindMax(getData(n).Child)
 		}
@@ -289,8 +308,15 @@ func walkDo(n *html.Node, f func(n *html.Node) bool) bool {
 	return true
 }
 
-func isElem(n *html.Node, d string) bool {
-	return n.Type == html.ElementNode && n.Data == d
+func isElem(n *html.Node, d ...string) bool {
+	if n.Type == html.ElementNode {
+		for _, dd := range d {
+			if n.Data == dd {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 const (

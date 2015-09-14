@@ -18,11 +18,20 @@ import (
 	"golang.org/x/net/html"
 )
 
+const (
+	JOINED = "joined"
+)
+
 func Handler(mux *http.ServeMux) {
 	mux.HandleFunc("/debug", debug)
 	mux.HandleFunc("/archive", archiveHandler)
 	mux.HandleFunc("/delete", deleteHandler)
+	mux.HandleFunc("/star", starHandler)
 	mux.HandleFunc("/", serve)
+}
+
+func starHandler(w http.ResponseWriter, req *http.Request) {
+	return
 }
 
 func archiveHandler(w http.ResponseWriter, req *http.Request) {
@@ -122,7 +131,7 @@ func debug(w http.ResponseWriter, req *http.Request) {
 
 	body := nodeFindBody(n)
 	max := nodeFindMax(body)
-	if max.Namespace == "joined" {
+	if max.Namespace == JOINED {
 		for a := max.FirstChild; a != nil; a = a.NextSibling {
 			if a == max.LastChild {
 				getData(a).Chosen = true
@@ -186,12 +195,30 @@ func genArticle(session *Session, req *http.Request) (*Article, error) {
 	if target.Data == "body" {
 		target.Data = "div"
 	}
-	setTitle := doFill(head, title, target)
+	var setTitle bool
 
+	if target != nil && target.Parent != nil {
+		var head *html.Node
+		if target.Namespace == JOINED {
+			head = target.Parent.FirstChild
+		} else {
+			head = target.FirstChild
+		}
+		if head.Type == html.TextNode {
+			head = nodeNext(head)
+		}
+		if isElem(head, "h1", "h2") {
+			title = getTitle(head)
+			head.Parent.RemoveChild(head)
+			setTitle = true
+		}
+	}
+
+	setTitle = doFill(setTitle, head, title, target)
 	tmpTitle := ""
 
 	if !setTitle {
-		walkDo(nodeFindBody(n), func(n *html.Node) bool {
+		walkDo(body, func(n *html.Node) bool {
 			if n == target {
 				return false
 			}
@@ -382,12 +409,14 @@ func writeResp(w http.ResponseWriter, a *Article) {
 	if u, _ := url.Parse(a.Url); u.RawQuery != "" {
 		ref = "?" + u.RawQuery + "&_fetch=1"
 	}
+
 	btns := `<div style="line-height:42px">
 <a class="btn" href="/">Home</a>
 <a class="btn" href="` + a.Url + `">Source</a>
 <a class="btn" href="/archive?id=` + a.Id.Hex() + `">Archive</a>
 <a class="btn" href="/delete?id=` + a.Id.Hex() + `">Delete</a>
 <a class="btn" href="` + ref + `">Refresh</a>
+<a class="btn" href="/debug?q=` + url.QueryEscape(a.Url) + `">Debug</a>
 </div>
 <div style="clear:both"></div>
 `
@@ -409,7 +438,7 @@ func writeResp(w http.ResponseWriter, a *Article) {
 		"<p></p></body></html>")
 }
 
-func doFill(head, title string, target *html.Node) (setTitle bool) {
+func doFill(setTitle bool, head, title string, target *html.Node) bool {
 	walkDo(target, func(n *html.Node) bool {
 		if n.Type != html.ElementNode {
 			return true
@@ -473,7 +502,7 @@ func doFill(head, title string, target *html.Node) (setTitle bool) {
 		}
 		return true
 	})
-	return
+	return setTitle
 }
 
 func doFilter(target *html.Node) {
