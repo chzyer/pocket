@@ -21,7 +21,7 @@ func getTitle(n *html.Node) string {
 		title = title[:idx]
 	}
 	title = strings.TrimSpace(title)
-	return
+	return title
 }
 
 func getText(n *html.Node) string {
