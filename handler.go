@@ -22,6 +22,14 @@ const (
 	JOINED = "joined"
 )
 
+func RedirectHandler(mux *http.ServeMux) {
+	mux.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
+		req.URL.Host = req.Host
+		req.URL.Scheme = "https"
+		http.Redirect(w, req, req.URL.String(), 301)
+	})
+}
+
 func Handler(mux *http.ServeMux) {
 	mux.HandleFunc("/debug", debug)
 	mux.HandleFunc("/archive", archiveHandler)
