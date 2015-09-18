@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/chzyer/flagx"
 
@@ -38,7 +39,12 @@ func main() {
 			}
 			done <- err == nil
 		}()
-		if <-done {
+		select {
+		case <-time.After(time.Second):
+		case d := <-done:
+			if !d {
+				break
+			}
 			mux := http.NewServeMux()
 			RedirectHandler(mux)
 			if err := http.ListenAndServe(cfg.Listen, mux); err != nil {
