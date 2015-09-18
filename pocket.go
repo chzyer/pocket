@@ -18,10 +18,6 @@ type Config struct {
 	Crt string
 }
 
-var (
-	HttpsEnable = true
-)
-
 func main() {
 	cfg := new(Config)
 	flagx.Parse(cfg)
@@ -34,22 +30,22 @@ func main() {
 		go func() {
 			err := http.ListenAndServeTLS(":443", cfg.Crt, cfg.Key, mux)
 			if err != nil {
-				HttpsEnable = false
 				logex.Error(err)
 			}
 			done <- err == nil
 		}()
+		d := true
 		select {
 		case <-time.After(time.Second):
-		case d := <-done:
-			if !d {
-				break
-			}
+		case d = <-done:
+		}
+		if d {
 			mux := http.NewServeMux()
 			RedirectHandler(mux)
 			if err := http.ListenAndServe(cfg.Listen, mux); err != nil {
 				logex.Error(err)
 			}
+			return
 		}
 	}
 	if err := http.ListenAndServe(cfg.Listen, mux); err != nil {
