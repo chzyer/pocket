@@ -548,7 +548,7 @@ func doFilter(target *html.Node) {
 				removeClass := []string{
 					"comment", "tracking-ad", "digg", "qr_code_pc_outer",
 					"random", "author-bio", "post-adds", "related_sponsors",
-					"lp-proCard", // leifeng
+					"lp-procard", // leifeng
 				}
 				for _, an := range attrname {
 					if attr := getAttr(an, n); attr != nil {
