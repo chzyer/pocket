@@ -322,6 +322,7 @@ func isElem(n *html.Node, d ...string) bool {
 const (
 	CS_UTF8 = "utf-8"
 	CS_GBK  = "gb2312"
+	CS_BIG5 = "big5"
 )
 
 func getCharset(n *html.Node) string {
@@ -342,8 +343,13 @@ func getCharset(n *html.Node) string {
 			continue
 		}
 		attr = getAttr("content", meta)
-		if attr != nil && strings.Contains(attr.Val, CS_GBK) {
-			return CS_GBK
+		if attr != nil {
+			switch {
+			case strings.Contains(attr.Val, CS_GBK):
+				return CS_GBK
+			case strings.Contains(attr.Val, CS_BIG5):
+				return CS_BIG5
+			}
 		}
 		meta = meta.NextSibling
 	}
