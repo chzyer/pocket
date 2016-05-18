@@ -265,7 +265,7 @@ func nodeFindMax(n *html.Node) *html.Node {
 	for ; n != nil; n = n.NextSibling {
 		count := getData(n).Count
 		maxChild := getData(n).MaxChild
-		if maxChild*100/count < 60 {
+		if count != 0 && maxChild*100/count < 60 {
 			nodes := make([]*html.Node, getData(n).ChildSize)
 			off := len(nodes) - 1
 			for prev := nodePrev(n); prev != nil; {
